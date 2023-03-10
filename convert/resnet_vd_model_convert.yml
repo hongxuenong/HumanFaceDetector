@@ -1,0 +1,11 @@
+Global:
+  use_gpu: true
+
+Architecture:
+  model_type: det
+  algorithm: DB
+  Transform:
+  Backbone:
+    name: ResNet
+    in_channels: 3
+    layers: 50

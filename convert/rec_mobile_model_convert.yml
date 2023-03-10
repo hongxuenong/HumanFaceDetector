@@ -1,0 +1,58 @@
+Global:
+  use_gpu: true
+  pretrained_model:
+  character_dict_path: ptocr/dict/en_dict.txt
+  max_text_length: &max_text_length 25
+  infer_mode: false
+  use_space_char: true
+  save_res_path: ./output/rec/predicts_ppocrv3_en.txt
+
+Architecture:
+  model_type: rec
+  algorithm: SVTR
+  Transform:
+  Backbone:
+    name: MobileNetV1Enhance
+    scale: 0.5
+    last_conv_stride: [1, 2]
+    last_pool_type: avg
+  Head:
+    name: MultiHead
+    head_list:
+      - CTCHead:
+          Neck:
+            name: svtr
+            dims: 64
+            depth: 2
+            hidden_dims: 120
+            use_guide: True
+          Head:
+            fc_decay: 0.00001
+      - SARHead:
+          enc_dim: 512
+          max_text_length: *max_text_length
+Loss:
+  name: MultiLoss
+  loss_config_list:
+    - CTCLoss:
+    - SARLoss:
+
+PostProcess:  
+  name: CTCLabelDecode
+
+Eval:
+  dataset:
+    transforms:
+    - DecodeImage:
+        img_mode: BGR
+        channel_first: false
+    - MultiLabelEncode:
+    - RecResizeImg:
+        image_shape: [3, 48, 320]
+    - KeepKeys:
+        keep_keys:
+        - image
+        - label_ctc
+        - label_sar
+        - length
+        - valid_ratio
